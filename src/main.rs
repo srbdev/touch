@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::path::Path;
 use std::fs::File;
 use structopt::StructOpt;
+use filetime::{FileTime, set_file_atime, set_file_mtime};
 
 #[derive(StructOpt)]
 struct Cli {
@@ -37,14 +38,21 @@ struct Cli {
 fn main() {
     let args = Cli::from_args();
     let path = Path::new(&args.path);
-    let display = path.display();
 
     if path.exists() {
-        // TODO: update the access and modification times of each path to the current time
+        match set_file_atime(path, FileTime::now()) {
+            Err(e) => println!("{:?}", e),
+            _ => ()
+        }
+
+        match set_file_mtime(path, FileTime::now()) {
+            Err(e) => println!("{:?}", e),
+            _ => ()
+        }
     } else {
-        let mut file = match File::create(&path) {
-            Err(why) => panic!("couldn't create {}: {}", display, why),
-            Ok(file) => file,
-        };
+        match File::create(&path) {
+            Err(e) => println!("{:?}", e),
+            _ => ()
+        }
     }
 }
