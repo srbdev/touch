@@ -8,7 +8,6 @@ use filetime::{FileTime, set_file_atime, set_file_mtime};
 struct Cli {
     // TODO: add additional args from the man pages
     // -a: change only the access time
-    // -c, --no-create: do not create any files
     // -d, --date=STRING: parse STRING and use it instead of current time
     // -f: (ignored)
     // -h, --no-deference: affect each symbolic link instead of any referenced file (only useful on
@@ -30,6 +29,10 @@ struct Cli {
     // info documentation.
     //
     // structopt docs: https://docs.rs/crate/structopt/0.3.13
+
+    #[structopt(short = "c", long)]
+    no_create: bool,
+
     #[structopt(parse(from_os_str))]
     path: PathBuf,
     // TODO: support args for multiple paths
@@ -49,7 +52,7 @@ fn main() {
             Err(e) => println!("{:?}", e),
             _ => ()
         }
-    } else {
+    } else if !&args.no_create {
         match File::create(&path) {
             Err(e) => println!("{:?}", e),
             _ => ()
