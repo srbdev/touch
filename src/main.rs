@@ -7,12 +7,10 @@ use filetime::{FileTime, set_file_atime, set_file_mtime};
 #[derive(StructOpt)]
 struct Cli {
     // TODO: add additional args from the man pages
-    // -a: change only the access time
     // -d, --date=STRING: parse STRING and use it instead of current time
     // -f: (ignored)
     // -h, --no-deference: affect each symbolic link instead of any referenced file (only useful on
     // systems that can change the timestamp of a symlink)
-    // -m: change only the modification time
     // -r, --reference=FILE: use this file's time instead of current time
     // -t STAMP: use [[CC]YY]MMDDhhmm[.ss] instead of current time
     // --time=WORD: change the specified time: WORD is access, atime, or use: equivalent to -a WORD
@@ -30,6 +28,12 @@ struct Cli {
     //
     // structopt docs: https://docs.rs/crate/structopt/0.3.13
 
+    #[structopt(short = "a", long)]
+    only_atime: bool,
+
+    #[structopt(short = "m", long)]
+    only_mtime: bool,
+
     #[structopt(short = "c", long)]
     no_create: bool,
 
@@ -43,14 +47,18 @@ fn main() {
     for file in &args.files {
         let path = Path::new(&file);
         if path.exists() {
-            match set_file_atime(path, FileTime::now()) {
-                Err(e) => println!("{:?}", e),
-                _ => ()
+            if !&args.only_mtime {
+                match set_file_atime(path, FileTime::now()) {
+                    Err(e) => println!("{:?}", e),
+                    _ => ()
+                }
             }
 
-            match set_file_mtime(path, FileTime::now()) {
-                Err(e) => println!("{:?}", e),
-                _ => ()
+            if !&args.only_atime {
+                match set_file_mtime(path, FileTime::now()) {
+                    Err(e) => println!("{:?}", e),
+                    _ => ()
+                }
             }
         } else if !&args.no_create {
             match File::create(&path) {
