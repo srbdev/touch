@@ -33,29 +33,30 @@ struct Cli {
     #[structopt(short = "c", long)]
     no_create: bool,
 
-    #[structopt(parse(from_os_str))]
-    path: PathBuf,
-    // TODO: support args for multiple paths
+    #[structopt(name = "FILE", parse(from_os_str))]
+    files: Vec<PathBuf>,
 }
 
 fn main() {
     let args = Cli::from_args();
-    let path = Path::new(&args.path);
 
-    if path.exists() {
-        match set_file_atime(path, FileTime::now()) {
-            Err(e) => println!("{:?}", e),
-            _ => ()
-        }
+    for file in &args.files {
+        let path = Path::new(&file);
+        if path.exists() {
+            match set_file_atime(path, FileTime::now()) {
+                Err(e) => println!("{:?}", e),
+                _ => ()
+            }
 
-        match set_file_mtime(path, FileTime::now()) {
-            Err(e) => println!("{:?}", e),
-            _ => ()
-        }
-    } else if !&args.no_create {
-        match File::create(&path) {
-            Err(e) => println!("{:?}", e),
-            _ => ()
+            match set_file_mtime(path, FileTime::now()) {
+                Err(e) => println!("{:?}", e),
+                _ => ()
+            }
+        } else if !&args.no_create {
+            match File::create(&path) {
+                Err(e) => println!("{:?}", e),
+                _ => ()
+            }
         }
     }
 }
