@@ -2,6 +2,13 @@
 name = "touch"
 version = "0.1.0"
 authors = ["srbdev <sylvain.rb@gmail.com>"]
+license = "GPLv3+"
+description = "A Rust implementation of the touch command (for Windows)"
+readme = "README.md"
+homepage = "https://github.com/srbdev/touch"
+repository = "https://github.com/srbdev/touch"
+keywords = ["cli", "touch", "windows"]
+categories = ["command-line-utilities"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
