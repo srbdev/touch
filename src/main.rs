@@ -25,6 +25,10 @@ struct Cli {
     /// Change only the modification time
     #[structopt(short = "m")]
     only_mtime: bool,
+    /// Change the specified time: Word is access, atime, or use: equivalent to `-a` Word is modify
+    /// or mtime: equivalent to `-m`
+    #[structopt(long)]
+    time: Option<String>,
 
     #[structopt(name = "FILE", parse(from_os_str))]
     files: Vec<PathBuf>,
@@ -32,6 +36,8 @@ struct Cli {
 
 fn main() {
     let args = Cli::from_args();
+    let mut only_atime = false;
+    let mut only_mtime = false;
     let mut atime = FileTime::now();
     let mut mtime = FileTime::now();
 
@@ -39,6 +45,19 @@ fn main() {
         Some(p) => p,
         None => PathBuf::new(),
     };
+
+    let time = match &args.time {
+        Some(t) => t,
+        None => "",
+    };
+
+    if time == "access" || time == "atime" || time == "use" || args.only_atime == true {
+        only_atime = true;
+    }
+
+    if time == "modify" || time == "mtime" || args.only_mtime == true {
+        only_mtime = true;
+    }
 
     if ref_path.file_name() != None {
         let rp = Path::new(&ref_path); // rp is local for ref_path
@@ -52,14 +71,14 @@ fn main() {
     for file in &args.files {
         let path = Path::new(&file);
         if path.exists() {
-            if !&args.only_mtime {
+            if only_mtime {
                 match set_file_atime(path, atime) {
                     Err(e) => println!("{:?}", e),
                     _ => ()
                 }
             }
 
-            if !&args.only_atime {
+            if only_atime {
                 match set_file_mtime(path, mtime) {
                     Err(e) => println!("{:?}", e),
                     _ => ()
