@@ -177,4 +177,16 @@ mod tests {
         assert_eq!(0, parse_seconds(&String::from("test.test")));
         assert_eq!(0,parse_seconds(&String::from("01010000.75")));
     }
+
+    #[test]
+    fn test_parse_minutes() {
+        assert_eq!(0, parse_minutes(&String::from("01010000")));
+        assert_eq!(0, parse_minutes(&String::from("01010000.00")));
+        assert_eq!(1, parse_minutes(&String::from("01010001")));
+        assert_eq!(34, parse_minutes(&String::from("01010034.00")));
+        assert_eq!(0, parse_minutes(&String::from("01010060")));
+        assert_eq!(0, parse_minutes(&String::from("test")));
+        assert_eq!(0, parse_minutes(&String::from("test.test")));
+        assert_eq!(0, parse_minutes(&String::from("")));
+    }
 }
