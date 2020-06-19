@@ -4,6 +4,7 @@ use std::fs::File;
 use std::fs::metadata;
 use structopt::StructOpt;
 use filetime::{FileTime, set_file_atime, set_file_mtime};
+use std::str::FromStr;
 
 #[derive(StructOpt)]
 struct Cli {
@@ -16,15 +17,18 @@ struct Cli {
     /// Do not create any files
     #[structopt(short = "c", long)]
     no_create: bool,
-    /// (ignored)
-    #[structopt(short = "f")]
-    force: bool,
+    // /// (ignored)
+    // #[structopt(short = "f")]
+    // force: bool,
     /// Use this file's times instead of current time
     #[structopt(short, long, parse(from_os_str))]
     reference: Option<PathBuf>,
     /// Change only the modification time
     #[structopt(short = "m")]
     only_mtime: bool,
+    /// Use [[CC]YY]MMDDhhmm[.ss] instead of current time
+    #[structopt(short = "t")]
+    time_stamp: Option<String>,
     /// Change the specified time: Word is access, atime, or use: equivalent to `-a` Word is modify
     /// or mtime: equivalent to `-m`
     #[structopt(long)]
@@ -34,12 +38,73 @@ struct Cli {
     files: Vec<PathBuf>,
 }
 
+fn parse_seconds(stamp: &String) -> u8 {
+    let tokens: Vec<&str> = stamp.split(".").collect();
+    let mut secs_u8 = 0;
+
+    if tokens.len() > 1 {
+        let mut secs= tokens[1].to_string();
+
+        if secs.len() == 1 {
+            secs.push_str("0");
+        }
+
+        secs_u8= match u8::from_str(secs.as_str()) {
+            Ok(s) => s,
+            Err(_) => 0,
+        };
+
+        if secs_u8 > 59 {
+            secs_u8 = 0;
+        }
+    }
+
+    return secs_u8;
+}
+
+fn parse_minutes(stamp: &String) -> u8 {
+    return 0;
+}
+
+fn parse_hours(_stamp: &String) -> u8 {
+    return 0;
+}
+
+fn parse_day(_stamp: &String) -> u8 {
+    return 1;
+}
+
+fn parse_month(_stamp: &String) -> u8 {
+    return 1;
+}
+
+fn parse_year(_stamp: &String) -> u16 {
+    return 2020;
+}
+
+pub fn parse_tstamp(stamp: &String) -> FileTime {
+    let _year = parse_year(&stamp);
+    let _month = parse_month(&stamp);
+    let _day = parse_day(&stamp);
+    let _hour = parse_hours(&stamp);
+    let _minutes = parse_minutes(&stamp);
+    let _seconds = parse_seconds(&stamp);
+
+    return FileTime::now();
+}
+
+
 fn main() {
     let args = Cli::from_args();
     let mut only_atime = false;
     let mut only_mtime = false;
-    let mut atime = FileTime::now();
-    let mut mtime = FileTime::now();
+
+    let tstamp = match args.time_stamp {
+        Some(s) => parse_tstamp(&s),
+        None => FileTime::now(),
+    };
+    let mut atime = tstamp;
+    let mut mtime = tstamp;
 
     let ref_path = match args.reference {
         Some(p) => p,
@@ -71,14 +136,14 @@ fn main() {
     for file in &args.files {
         let path = Path::new(&file);
         if path.exists() {
-            if only_mtime {
+            if only_mtime || (!only_mtime && !only_atime) {
                 match set_file_atime(path, atime) {
                     Err(e) => println!("{:?}", e),
                     _ => ()
                 }
             }
 
-            if only_atime {
+            if only_atime || (!only_mtime && !only_atime) {
                 match set_file_mtime(path, mtime) {
                     Err(e) => println!("{:?}", e),
                     _ => ()
@@ -90,5 +155,26 @@ fn main() {
                 _ => ()
             }
         }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // [[CC]YY]MMDDhhmm[.ss] for reference...
+    #[test]
+    fn test_parse_seconds() {
+        assert_eq!(0, parse_seconds(&String::from("01010000")));
+        assert_eq!(0, parse_seconds(&String::from("01010000.00")));
+        assert_eq!(30, parse_seconds(&String::from("01010000.30")));
+        assert_eq!(0, parse_seconds(&String::from("")));
+        assert_eq!(7, parse_seconds(&String::from("01010000.07")));
+        assert_eq!(5, parse_seconds(&String::from(".05")));
+        assert_eq!(50, parse_seconds(&String::from("01010000.5")));
+        assert_eq!(0, parse_seconds(&String::from("test")));
+        assert_eq!(0, parse_seconds(&String::from("test.test")));
+        assert_eq!(0,parse_seconds(&String::from("01010000.75")));
     }
 }
