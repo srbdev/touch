@@ -49,7 +49,7 @@ fn parse_seconds(stamp: &String) -> u8 {
             secs.push_str("0");
         }
 
-        secs_u8= match u8::from_str(secs.as_str()) {
+        secs_u8 = match u8::from_str(secs.as_str()) {
             Ok(s) => s,
             Err(_) => 0,
         };
@@ -63,7 +63,24 @@ fn parse_seconds(stamp: &String) -> u8 {
 }
 
 fn parse_minutes(stamp: &String) -> u8 {
-    return 0;
+    let tokens: Vec<&str> = stamp.split(".").collect();
+    let mins = tokens[0];
+    let mut mins_u8 = 0;
+
+    if let Some((i, _)) = mins.char_indices().rev().nth(1) {
+        let mins_str = &mins[i..];
+
+        mins_u8 = match u8::from_str(mins_str) {
+            Ok(s) => s,
+            Err(_) => 0,
+        };
+
+        if mins_u8 > 59 {
+            mins_u8 = 0;
+        }
+    }
+
+    return mins_u8;
 }
 
 fn parse_hours(_stamp: &String) -> u8 {
