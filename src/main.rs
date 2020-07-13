@@ -5,6 +5,7 @@ use std::fs::metadata;
 use structopt::StructOpt;
 use filetime::{FileTime, set_file_atime, set_file_mtime};
 use std::str::FromStr;
+use chrono::prelude::*;
 
 #[derive(StructOpt)]
 struct Cli {
@@ -43,7 +44,7 @@ fn parse_seconds(stamp: &String) -> u8 {
     let mut secs_u8 = 0;
 
     if tokens.len() > 1 {
-        let mut secs= tokens[1].to_string();
+        let mut secs = tokens[1].to_string();
 
         if secs.len() == 1 {
             secs.push_str("0");
@@ -95,8 +96,27 @@ fn parse_month(_stamp: &String) -> u8 {
     return 1;
 }
 
-fn parse_year(_stamp: &String) -> u16 {
-    return 2020;
+fn parse_year(stamp: &String) -> i32 {
+    let tokens: Vec<&str> = stamp.split(".").collect();
+    let year = tokens[0];
+    println!("{}", year);
+
+    if year.len() == 10 || stamp.len() == 12 {
+        let mut l = 4;
+        if year.len() == 10 {
+            l = 2;
+        }
+
+        let year_str: String = year.chars().skip(0).take(l).collect();
+        let year_i32 = match i32::from_str(year_str.as_str()) {
+            Ok(s) => s,
+            Err(_) => 0,
+        };
+
+        return year_i32;
+    }
+
+    return Utc::now().year();
 }
 
 pub fn parse_tstamp(stamp: &String) -> FileTime {
@@ -205,5 +225,37 @@ mod tests {
         assert_eq!(0, parse_minutes(&String::from("test")));
         assert_eq!(0, parse_minutes(&String::from("test.test")));
         assert_eq!(0, parse_minutes(&String::from("")));
+    }
+
+    #[test]
+    fn test_parse_hours() {
+        assert_eq!(0, parse_hours(&String::from("test")));
+        assert_eq!(0, parse_hours(&String::from("test.test")));
+        assert_eq!(0, parse_hours(&String::from("")));
+    }
+
+    #[test]
+    fn test_parse_day() {
+        assert_eq!(1, parse_day(&String::from("test")));
+        assert_eq!(1, parse_day(&String::from("test.test")));
+        assert_eq!(1, parse_day(&String::from("")));
+    }
+
+    #[test]
+    fn test_parse_month() {
+        assert_eq!(1, parse_month(&String::from("test")));
+        assert_eq!(1, parse_month(&String::from("test.test")));
+        assert_eq!(1, parse_month(&String::from("")));
+    }
+
+    #[test]
+    fn test_parse_year() {
+        let now = Utc::now();
+
+        assert_eq!(2000, parse_year(&String::from("200001010000.00")));
+        assert_eq!(now.year(), parse_year(&String::from("01010000.00")));
+        assert_eq!(now.year(), parse_year(&String::from("test")));
+        assert_eq!(now.year(), parse_year(&String::from("test.test")));
+        assert_eq!(now.year(), parse_year(&String::from("")));
     }
 }
