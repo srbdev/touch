@@ -100,17 +100,22 @@ fn parse_year(stamp: &String) -> i32 {
     let tokens: Vec<&str> = stamp.split(".").collect();
     let year = tokens[0];
 
-    if year.len() == 12 || stamp.len() == 15 {
+    if year.len() == 12 || year.len() == 10 || stamp.len() == 13 || stamp.len() == 15 {
         let mut l = 4;
         if year.len() == 10 {
             l = 2;
         }
 
         let year_str: String = year.chars().skip(0).take(l).collect();
-        let year_i32 = match i32::from_str(year_str.as_str()) {
+        let mut year_i32 = match i32::from_str(year_str.as_str()) {
             Ok(s) => s,
             Err(_) => 0,
         };
+
+        if year.len() == 10 {
+            // TODO: find a better way if want tool to survive past 100 years
+            year_i32 += 2000;
+        }
 
         return year_i32;
     }
@@ -252,6 +257,8 @@ mod tests {
         let now = Utc::now();
 
         assert_eq!(2000, parse_year(&String::from("200001010000.00")));
+        assert_eq!(2013, parse_year(&String::from("201301010000.00")));
+        assert_eq!(2016, parse_year(&String::from("1601010000.00")));
         assert_eq!(now.year(), parse_year(&String::from("01010000.00")));
         assert_eq!(now.year(), parse_year(&String::from("test")));
         assert_eq!(now.year(), parse_year(&String::from("test.test")));
