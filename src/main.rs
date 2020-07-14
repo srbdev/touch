@@ -99,9 +99,8 @@ fn parse_month(_stamp: &String) -> u8 {
 fn parse_year(stamp: &String) -> i32 {
     let tokens: Vec<&str> = stamp.split(".").collect();
     let year = tokens[0];
-    println!("{}", year);
 
-    if year.len() == 10 || stamp.len() == 12 {
+    if year.len() == 12 || stamp.len() == 15 {
         let mut l = 4;
         if year.len() == 10 {
             l = 2;
