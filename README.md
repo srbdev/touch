@@ -13,3 +13,13 @@ PS> cargo install --path .
 ```powershell
 PS> touch -h
 ```
+
+## Development
+
+To run the application locally as part of the development process, use the following command:
+
+```zsh
+% cargo run -- [ARGS]
+```
+
+where `[ARGS]` are the options and arguments for the command line utility, e.g. `cargo run -- -h` or `cargo run -- --version`.
