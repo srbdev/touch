@@ -92,8 +92,33 @@ fn parse_day(_stamp: &String) -> u8 {
     return 1;
 }
 
-fn parse_month(_stamp: &String) -> u8 {
-    return 1;
+fn parse_month(stamp: &String) -> u8 {
+    let tokens: Vec<&str> = stamp.split(".").collect();
+    let month = tokens[0];
+    let mut month_u8 = 1;
+
+    if month.len() < 8 {
+        return month_u8;
+    }
+
+    if let Some((i, _)) = month.char_indices().nth(month.len() - 6) {
+        let some_str = &month[..i];
+
+        if let Some((j, _)) = some_str.char_indices().rev().nth(1) {
+            let month_str = &some_str[j..];
+
+            month_u8 = match u8::from_str(month_str) {
+                Ok(s) => s,
+                Err(_) => 1,
+            };
+
+            if month_u8 > 12 {
+                month_u8 = 1;
+            }
+        }
+    }
+
+    return month_u8;
 }
 
 fn parse_year(stamp: &String) -> i32 {
@@ -247,6 +272,13 @@ mod tests {
 
     #[test]
     fn test_parse_month() {
+        assert_eq!(1, parse_month(&String::from("200001010000.00")));
+        assert_eq!(2, parse_month(&String::from("201302010000.00")));
+        assert_eq!(12, parse_month(&String::from("1612010000.00")));
+        assert_eq!(11, parse_month(&String::from("11010000.00")));
+        // TODO: what's the convention here
+        assert_eq!(1, parse_month(&String::from("200013010000.00")));
+        assert_eq!(1, parse_month(&String::from("qwertyuiop")));
         assert_eq!(1, parse_month(&String::from("test")));
         assert_eq!(1, parse_month(&String::from("test.test")));
         assert_eq!(1, parse_month(&String::from("")));
