@@ -1,7 +1,7 @@
 [package]
 name = "touch"
 version = "0.1.0"
-authors = ["srbdev <sylvain.rb@gmail.com>"]
+authors = ["srbdev"]
 license = "GPLv3+"
 description = "A Rust implementation of the touch command (for Windows)"
 readme = "README.md"

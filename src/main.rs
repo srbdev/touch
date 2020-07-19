@@ -39,9 +39,9 @@ struct Cli {
     files: Vec<PathBuf>,
 }
 
-fn parse_seconds(stamp: &String) -> u8 {
+fn parse_seconds(stamp: &String) -> u32 {
     let tokens: Vec<&str> = stamp.split(".").collect();
-    let mut secs_u8 = 0;
+    let mut secs_u32: u32 = 0;
 
     if tokens.len() > 1 {
         let mut secs = tokens[1].to_string();
@@ -50,55 +50,105 @@ fn parse_seconds(stamp: &String) -> u8 {
             secs.push_str("0");
         }
 
-        secs_u8 = match u8::from_str(secs.as_str()) {
+        secs_u32 = match u32::from_str(secs.as_str()) {
             Ok(s) => s,
             Err(_) => 0,
         };
 
-        if secs_u8 > 59 {
-            secs_u8 = 0;
+        if secs_u32 > 59 {
+            secs_u32 = 0;
         }
     }
 
-    return secs_u8;
+    return secs_u32;
 }
 
-fn parse_minutes(stamp: &String) -> u8 {
+fn parse_minutes(stamp: &String) -> u32 {
     let tokens: Vec<&str> = stamp.split(".").collect();
     let mins = tokens[0];
-    let mut mins_u8 = 0;
+    let mut mins_u32: u32 = 0;
 
     if let Some((i, _)) = mins.char_indices().rev().nth(1) {
         let mins_str = &mins[i..];
 
-        mins_u8 = match u8::from_str(mins_str) {
+        mins_u32 = match u32::from_str(mins_str) {
             Ok(s) => s,
             Err(_) => 0,
         };
 
-        if mins_u8 > 59 {
-            mins_u8 = 0;
+        if mins_u32 > 59 {
+            mins_u32 = 0;
         }
     }
 
-    return mins_u8;
+    return mins_u32;
 }
 
-fn parse_hours(_stamp: &String) -> u8 {
-    return 0;
+fn parse_hours(stamp: &String) -> u32 {
+    let tokens: Vec<&str> = stamp.split(".").collect();
+    let hours = tokens[0];
+    let mut hours_u32: u32 = 0;
+
+    if hours.len() < 8 {
+        return hours_u32;
+    }
+
+    if let Some((i, _)) = hours.char_indices().nth(hours.len() - 2) {
+        let some_str = &hours[..i];
+
+        if let Some((j, _)) = some_str.char_indices().rev().nth(1) {
+            let hours_str = &some_str[j..];
+
+            hours_u32 = match u32::from_str(hours_str) {
+                Ok(s) => s,
+                Err(_) => 0,
+            };
+
+            if hours_u32 > 23 {
+                hours_u32 = 0;
+            }
+        }
+    }
+
+    return hours_u32;
 }
 
-fn parse_day(_stamp: &String) -> u8 {
-    return 1;
+fn parse_day(stamp: &String) -> u32 {
+    let tokens: Vec<&str> = stamp.split(".").collect();
+    let day = tokens[0];
+    let mut day_u32: u32 = 1;
+
+    if day.len() < 8 {
+        return day_u32;
+    }
+
+    if let Some((i, _)) = day.char_indices().nth(day.len() - 4) {
+        let some_str = &day[..i];
+
+        if let Some((j, _)) = some_str.char_indices().rev().nth(1) {
+            let day_str = &some_str[j..];
+
+            day_u32 = match u32::from_str(day_str) {
+                Ok(s) => s,
+                Err(_) => 1,
+            };
+
+            if day_u32 > 31 {
+                day_u32 = 1;
+            }
+        }
+    }
+
+    return day_u32;
 }
 
-fn parse_month(stamp: &String) -> u8 {
+fn parse_month(stamp: &String) -> u32 {
     let tokens: Vec<&str> = stamp.split(".").collect();
     let month = tokens[0];
-    let mut month_u8 = 1;
+    let mut month_u32: u32 = 1;
 
     if month.len() < 8 {
-        return month_u8;
+        return month_u32;
     }
 
     if let Some((i, _)) = month.char_indices().nth(month.len() - 6) {
@@ -107,18 +157,18 @@ fn parse_month(stamp: &String) -> u8 {
         if let Some((j, _)) = some_str.char_indices().rev().nth(1) {
             let month_str = &some_str[j..];
 
-            month_u8 = match u8::from_str(month_str) {
+            month_u32 = match u32::from_str(month_str) {
                 Ok(s) => s,
                 Err(_) => 1,
             };
 
-            if month_u8 > 12 {
-                month_u8 = 1;
+            if month_u32 > 12 {
+                month_u32 = 1;
             }
         }
     }
 
-    return month_u8;
+    return month_u32;
 }
 
 fn parse_year(stamp: &String) -> i32 {
@@ -149,14 +199,15 @@ fn parse_year(stamp: &String) -> i32 {
 }
 
 pub fn parse_tstamp(stamp: &String) -> FileTime {
-    let _year = parse_year(&stamp);
-    let _month = parse_month(&stamp);
-    let _day = parse_day(&stamp);
-    let _hour = parse_hours(&stamp);
-    let _minutes = parse_minutes(&stamp);
-    let _seconds = parse_seconds(&stamp);
+    let year = parse_year(&stamp);
+    let month = parse_month(&stamp);
+    let day = parse_day(&stamp);
+    let hour = parse_hours(&stamp);
+    let minutes = parse_minutes(&stamp);
+    let seconds = parse_seconds(&stamp);
 
-    return FileTime::now();
+    let dt: DateTime<Local> = Local.ymd(year, month, day).and_hms(hour, minutes, seconds);
+    return FileTime::from_unix_time(dt.timestamp(), 0);
 }
 
 
@@ -258,6 +309,13 @@ mod tests {
 
     #[test]
     fn test_parse_hours() {
+        assert_eq!(1, parse_hours(&String::from("200001010100.00")));
+        assert_eq!(2, parse_hours(&String::from("201302020200.00")));
+        assert_eq!(15, parse_hours(&String::from("1612151500.00")));
+        assert_eq!(22, parse_hours(&String::from("11242200.00")));
+        // TODO: what's the convention here?
+        assert_eq!(0, parse_hours(&String::from("200013322400.00")));
+        assert_eq!(0, parse_hours(&String::from("qwertyuiop")));
         assert_eq!(0, parse_hours(&String::from("test")));
         assert_eq!(0, parse_hours(&String::from("test.test")));
         assert_eq!(0, parse_hours(&String::from("")));
@@ -265,6 +323,14 @@ mod tests {
 
     #[test]
     fn test_parse_day() {
+        assert_eq!(1, parse_day(&String::from("200001010000.00")));
+        assert_eq!(2, parse_day(&String::from("201302020000.00")));
+        assert_eq!(15, parse_day(&String::from("1612150000.00")));
+        assert_eq!(24, parse_day(&String::from("11240000.00")));
+        // TODO: what's the convention here?
+        // TODO: know what the upper limit is depending on the month
+        assert_eq!(1, parse_day(&String::from("200013320000.00")));
+        assert_eq!(1, parse_day(&String::from("qwertyuiop")));
         assert_eq!(1, parse_day(&String::from("test")));
         assert_eq!(1, parse_day(&String::from("test.test")));
         assert_eq!(1, parse_day(&String::from("")));
@@ -276,7 +342,7 @@ mod tests {
         assert_eq!(2, parse_month(&String::from("201302010000.00")));
         assert_eq!(12, parse_month(&String::from("1612010000.00")));
         assert_eq!(11, parse_month(&String::from("11010000.00")));
-        // TODO: what's the convention here
+        // TODO: what's the convention here?
         assert_eq!(1, parse_month(&String::from("200013010000.00")));
         assert_eq!(1, parse_month(&String::from("qwertyuiop")));
         assert_eq!(1, parse_month(&String::from("test")));
