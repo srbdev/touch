@@ -1,4 +1,7 @@
 # touch
+
+![Rust](https://github.com/srbdev/touch/workflows/Rust/badge.svg?branch=master&event=push)
+
 A Rust implementation of the touch command (for Windows, mostly...). It's not trying to replace `touch` from a Unix or Linux system, but just brings the functionality (and familiarity) to the Windows PowerShell.
 
 ## Installation
