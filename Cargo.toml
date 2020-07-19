@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://github.com/srbdev/touch"
 repository = "https://github.com/srbdev/touch"
 keywords = ["cli", "touch", "windows"]
-categories = ["command-line-utilities"]
+categories = ["command-line-utilities", "filesystem", "os"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
